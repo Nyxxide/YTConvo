@@ -32,7 +32,7 @@ def download_youtube_video_as_mp3(videoData):
             'quiet': False,
         }
     elif videoData.get("ext") == "mp4":
-        quality = videoData.get("quality")
+        quality = str(videoData.get("quality", "")).replace("p", "")
         options = {
             'format': f'bestvideo[ext=mp4][height<={quality}]+bestaudio[ext=m4a]/best[height<={quality}]',
             'outtmpl': f'{OUTPUT_PATH}/%(title)s.%(ext)s',
