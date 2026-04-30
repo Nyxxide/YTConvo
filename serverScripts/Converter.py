@@ -17,15 +17,29 @@ OUTPUT_PATH = os.path.join(app.instance_path, "Holding")
 def home():
     return render_template('index.html')
 
+def base_ydlp_options():
+    return {
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0"
+        },
+        "sleep_interval": 1,
+        "max_sleep_interval": 3,
+        "retries": 3,
+        "fragment_retries": 3,
+        "quiet": False,
+    }
+
 def download_youtube_video_as_mp3(videoData):
     processors = os.cpu_count()
     if videoData.get("ext") == "m4a":
-        options = {
+        options = base_ydlp_options()
+        options.update({
             'format': 'bestaudio[ext=m4a]',
             'outtmpl': f'{OUTPUT_PATH}/%(title)s.%(ext)s',
-        }
+        })
     elif videoData.get("ext") == "mp3":
-        options = {
+        options = base_ydlp_options()
+        options.update({
             'format': 'bestaudio/best',
             'postprocessors': [
                 {
@@ -36,13 +50,14 @@ def download_youtube_video_as_mp3(videoData):
             ],
             'outtmpl': f'{OUTPUT_PATH}/%(title)s.%(ext)s',
             'quiet': False,
-        }
+        })
     elif videoData.get("ext") == "mp4":
         quality = str(videoData.get("quality", "")).replace("p", "")
-        options = {
+        options = base_ydlp_options()
+        options.update({
             'format': f'bestvideo[ext=mp4][height<={quality}]+bestaudio[ext=m4a]/best[height<={quality}]',
             'outtmpl': f'{OUTPUT_PATH}/%(title)s.%(ext)s',
-        }
+        })
 
     with yt_dlp.YoutubeDL(options) as ydl:
         info = ydl.extract_info(videoData.get("URL"), download=True)
@@ -80,7 +95,7 @@ def get_format_list():
     
     data =request.get_json()
     if data.get("URL") is not None:
-        ydlp = yt_dlp.YoutubeDL()
+        ydlp = yt_dlp.YoutubeDL(base_ydlp_options())
         video_info = ydlp.extract_info(data.get("URL"), download=False)
         buildJson = video_info['formats']
         resJson = {"ext": [], "quality": []}
